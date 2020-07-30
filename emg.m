@@ -455,3 +455,333 @@ rmsdata=RMSdat;
 meansqrdata=MSdat;
 
 End
+
+Linear regression function:
+function [output,coeff] = LinearRegression(ForceVector,AnalysisVector)
+%UNTITLED Summary of this function goes here
+%   Detailed explanation goes here
+coeff=polyfit(ForceVector,AnalysisVector,1);
+output=polyval(coeff,ForceVector);
+end
+
+
+MSE and residuals function:
+function [MSE,CorrCoeff] = MSEandResiduals(AverageForceVector,AnalysisVector)
+k=corrcoef(AverageForceVector,AnalysisVector);
+%Used to take value out of array for better automation
+k=k(1,2);
+CorrCoeff=k;
+MSE=immse(AverageForceVector,AnalysisVector);
+end
+
+
+Exercise 2.2 function for twenty window sizes:
+function [mse_mean,cc_mean,mse_ms,cc_ms,mse_rms,cc_rms] = exp2p2(AverageForceVector,windowsize,Section1,Section2,Section3,Section4,Section5,Section6)
+
+[Mean1,Variance1,DR1,RMS1,MS1]= WindowData(Section1,windowsize);
+Average1=mean(Mean1);
+RMS1=mean(RMS1);
+MS1=mean(MS1);
+[Mean2,Variance2,DR2,RMS2,MS2]= WindowData(Section2,windowsize);
+Average2=mean(Mean2);
+RMS2=mean(RMS2);
+MS2=mean(MS2);
+[Mean3,Variance3,DR3,RMS3,MS3]= WindowData(Section3,windowsize);
+Average3=mean(Mean3);
+RMS3=mean(RMS3);
+MS3=mean(MS3);
+[Mean4,Variance4,DR4,RMS4,MS4]= WindowData(Section4,windowsize);
+Average4=mean(Mean4);
+RMS4=mean(RMS4);
+MS4=mean(MS4);
+[Mean5,Variance5,DR5,RMS5,MS5]= WindowData(Section5,windowsize);
+Average5=mean(Mean5);
+RMS5=mean(RMS5);
+MS5=mean(MS5);
+[Mean6,Variance6,DR6,RMS6,MS6]= WindowData(Section6,windowsize);
+Average6=mean(Mean6);
+RMS6=mean(RMS6);
+MS6=mean(MS6);
+
+MeanVector=[Average1,Average2,Average3,Average4,Average5,Average6];
+RMSVector=[RMS1,RMS2,RMS3,RMS4,RMS5,RMS6];
+MSVector=[MS1,MS2,MS3,MS4,MS5,MS6];
+
+[mse_mean,cc_mean]=MSEandResiduals(AverageForceVector,MeanVector);
+[mse_ms,cc_ms]=MSEandResiduals(AverageForceVector,MSVector);
+[mse_rms,cc_rms]=MSEandResiduals(AverageForceVector,RMSVector);
+End
+
+
+
+Exercise 3:
+
+
+% Opening File
+m = readtable('GraspFatigue.csv');
+
+% Creating vectors
+tx2 = m(:,1); %extracting time values from the experiment data
+tx2 = tx2{:,:}; %making the matrix useful for calculations
+emgx2 = m(:,2); %extracting emg values from the experiment data
+emgx2 = emgx2{:,:}; %making the matrix useful for calculations
+forcex2 = m(:,3); %extracting force values from the experiment data
+forcex2 = forcex2{:,:}; %making the matrix useful for calculations
+
+timex2 = 0 : length(tx2) - 1; 
+timex2 = timex2 * 0.001; %conversion of time array to take into the account the sampling rate (1000Hz)
+
+%Normalizing the data
+normForce = forcex2 - min(forcex2(:));
+normForce = normForce ./ max(normForce(:));
+
+normemg = emgx2 - min(emgx2(:));
+normemg = normemg ./ max(normemg(:));
+
+
+
+%% Experiment 1 for the full emg and force signals (not needed)
+% for force
+sampfreq=1000;
+window1=0.05;
+window1=window1*sampfreq;
+%Short-Term Analysis Variables
+[Average1,Variance1,DR1,RMS1,MS1]= WindowData(normForce,window1);
+%Flip to Vertical
+Average1=Average1.';
+Variance1=Variance1.';
+DR1=DR1.';
+RMS1=RMS1.';
+MS1=MS1.';
+
+%Plot of Short-Term Analysis Variables over Original
+figure(3)
+plot(timex2,normForce);
+title('Plot of Short-Term Analysis Features of Force Data With Window Size 0.25s')
+xlabel('Time(s)')
+ylabel('Voltage(V)')
+hold on
+plot(timex2,Average1);
+plot(timex2,Variance1);
+plot(timex2,DR1);
+plot(timex2,RMS1);
+plot(timex2,MS1);
+legend('Original Data','Average','Variance','Dynamic Range','RMS','MeanSquare')
+hold off
+
+% for emg
+
+%Short-Term Analysis Variables
+[Average2,Variance2,DR2,RMS2,MS2]= WindowData(normemg,window1);
+%Flip to Vertical
+Average2=Average2.';
+Variance2=Variance2.';
+DR2=DR2.';
+RMS2=RMS2.';
+MS2=MS2.';
+
+%Plot of Short-Term Analysis Variables over Original
+figure(4)
+plot(timex2,normemg);
+title('Plot of Short-Term Analysis Features of EMG Data With Window Size 0.25s')
+xlabel('Time(s)')
+ylabel('Voltage(V)')
+hold on
+plot(timex2,Average2);
+plot(timex2,Variance2);
+plot(timex2,DR2);
+plot(timex2,RMS2);
+plot(timex2,MS2);
+legend('Original Data','Average','Variance','Dynamic Range','RMS','MeanSquare')
+hold off
+
+
+%% Window for each section of the signals outlined by the code above
+
+%creating vectors with the respective window sizes based off of above code
+forcesec1 = normForce(4949:8720);
+forcesec2 = normForce(11873:14696);
+forcesec3 = normForce(18009:21180);
+forcesec4 = normForce(24753:28580);
+forcesec5 = normForce(31773:35976);
+forcesec6 = normForce(39069:43324);
+
+emgsec1 = normemg(4949:8720);
+emgsec2 = normemg(11873:14696);
+emgsec3 = normemg(18009:21180);
+emgsec4 = normemg(24753:28580);
+emgsec5 = normemg(31773:35976);
+emgsec6 = normemg(39069:43324);
+
+%windows
+sampfreq=1000;
+window1=0.05;
+window1=window1*sampfreq;
+
+%Short-Term Analysis Variables
+%FSec1
+[AverageF1,VarianceF1,DRF1,RMSF1,MSF1]= WindowData(emgsec1,window1);
+%Flip to Vertical
+AverageF1=mean(AverageF1);
+meanF1=mean(forcesec1);
+VarianceF1=mean(VarianceF1);
+DRF1=mean(DRF1);
+RMSF1=mean(RMSF1);
+MSF1=mean(MSF1);
+
+%FSec2
+[AverageF2,VarianceF2,DRF2,RMSF2,MSF2]= WindowData(emgsec2,window1);
+%Flip to Vertical
+AverageF2=mean(AverageF2);
+meanF2=mean(forcesec2);
+VarianceF2=mean(VarianceF2);
+DRF2=mean(DRF2);
+RMSF2=mean(RMSF2);
+MSF2=mean(MSF2);
+
+%FSec3
+[AverageF3,VarianceF3,DRF3,RMSF3,MSF3]= WindowData(emgsec3,window1);
+%Flip to Vertical
+AverageF3=mean(AverageF3);
+meanF3=mean(forcesec3);
+VarianceF3=mean(VarianceF3);
+DRF3=mean(DRF3);
+RMSF3=mean(RMSF3);
+MSF3=mean(MSF3);
+
+%FSec4
+[AverageF4,VarianceF4,DRF4,RMSF4,MSF4]= WindowData(emgsec4,window1);
+%Flip to Vertical
+AverageF4=mean(AverageF4);
+meanF4=mean(forcesec4);
+VarianceF4=mean(VarianceF4);
+DRF4=mean(DRF4);
+RMSF4=mean(RMSF4);
+MSF4=mean(MSF4);
+
+%FSec5
+[AverageF5,VarianceF5,DRF5,RMSF5,MSF5]= WindowData(emgsec5,window1);
+%Flip to Vertical
+AverageF5=mean(AverageF5);
+meanF5=mean(forcesec5);
+VarianceF5=mean(VarianceF5);
+DRF5=mean(DRF5);
+RMSF5=mean(RMSF5);
+MSF5=mean(MSF5);
+
+%FSec6
+[AverageF6,VarianceF6,DRF6,RMSF6,MSF6]= WindowData(emgsec6,window1);
+%Flip to Vertical
+AverageF6=mean(AverageF6);
+meanF6=mean(forcesec6);
+VarianceF6=mean(VarianceF6);
+DRF6=mean(DRF6);
+RMSF6=mean(RMSF6);
+MSF6=mean(MSF6);
+
+%% Linear regression
+AverageFvector = [meanF1, meanF2, meanF3, meanF4, meanF5, meanF6];
+
+%force
+meanFvector = [AverageF1, AverageF2, AverageF3, AverageF4, AverageF5, AverageF6];
+coeff1 = polyfit(AverageFvector,meanFvector,1);
+meanFaverage = polyval(coeff1,AverageFvector);
+
+%Variance
+meanVvector = [VarianceF1,VarianceF2,VarianceF3,VarianceF4,VarianceF5,VarianceF6];
+coeff2 = polyfit(AverageFvector,meanVvector,1);
+meanVaverage = polyval(coeff2,AverageFvector);
+
+%DR
+meanDRvector = [DRF1, DRF2, DRF3, DRF4, DRF5, DRF6];
+coeff3 = polyfit(AverageFvector,meanDRvector,1);
+meanDRaverage = polyval(coeff3,AverageFvector);
+
+%RMS
+meanRMSvector = [RMSF1, RMSF2, RMSF3, RMSF4, RMSF5, RMSF6];
+coeff4 = polyfit(AverageFvector,meanRMSvector,1);
+meanRMSaverage = polyval(coeff4,AverageFvector);
+
+%MS
+meanMSvector = [MSF1, MSF2, MSF3, MSF4, MSF5, MSF6];
+coeff5 = polyfit(AverageFvector,meanMSvector,1);
+meanMSaverage = polyval(coeff5,AverageFvector);
+
+%force
+figure(5)
+text(0,0,'y = 0.0096F + 0.6622');
+scatter(AverageFvector,meanFvector);
+hold on
+plot(AverageFvector,meanFaverage);
+hold off;
+title('Force residuals');
+
+%variance
+figure(6)
+text(0,0,'y = -0.0021F + 0.0064');
+scatter(AverageFvector,meanVvector);
+hold on
+plot(AverageFvector,meanVaverage);
+hold off;
+title('Variance residuals');
+
+%DR
+figure(7)
+text(0,0,'y = 0.0351F + 0.0653');
+scatter(AverageFvector,meanDRvector);
+hold on
+plot(AverageFvector,meanDRaverage);
+hold off;
+title('Dynamic Range residuals');
+
+%RMS
+figure(8)
+text(0,0,'y = 0.0065F + 0.6714');
+scatter(AverageFvector,meanRMSvector);
+hold on
+plot(AverageFvector,meanRMSaverage);
+hold off;
+title('Root Mean Squared residuals');
+
+%MS
+figure(9)
+text(0,0,'y = 0.0067F + 0.4568');
+scatter(AverageFvector,meanMSvector);
+hold on
+plot(AverageFvector,meanMSaverage);
+hold off;
+title('Mean Squared residuals');
+
+%% Correlation coefficient
+
+%forece
+R1 = corrcoef(AverageFvector,meanFvector);
+
+% Variance
+R2 = corrcoef(AverageFvector,meanVvector);
+
+% DRF
+R3 = corrcoef(AverageFvector,meanDRvector);
+
+% RMS
+R4 = corrcoef(AverageFvector,meanRMSvector);
+
+%MS
+R5 = corrcoef(AverageFvector,meanMSvector);
+
+%% Mean square error
+
+% force
+MSE1 = immse(AverageFvector,meanFvector);
+
+%variance
+MSE2 = immse(AverageFvector,meanVvector);
+
+% DRF
+MSE3 = immse(AverageFvector,meanDRvector);
+
+% RMS
+MSE4 = immse(AverageFvector,meanRMSvector);
+
+% MS
+MSE5 = immse(AverageFvector,meanMSvector);
